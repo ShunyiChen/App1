@@ -6,15 +6,19 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System;
-using System.Windows;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Unicode;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Media.Core;
@@ -31,13 +35,6 @@ namespace App1
     /// </summary>
     public sealed partial class MainWindow : Window
     {
-
-        //private Timer _timer;
-        //private int _countdownValue;
-        //配置文件参数
-        //private int _interval;
-        //private int _reminder;
-
         private DispatcherTimer _timer;
         private int TeamsAwaySeconds = 300;     // 5 分钟
         private int EarlyWarningSeconds = 10;   // 提前 10 秒
@@ -76,7 +73,6 @@ namespace App1
                 ContinuousReminderCheckBox.IsChecked = false;
             }
         }
-
         private static string GetSettingsFilePath()
         {
             string homePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -143,11 +139,8 @@ namespace App1
         private void PlayMp3File()
         {
             // 获取本地MP3文件的路径
-            string filePath = "ms-appx:///Assets/alert.wav"; // 使用相对路径或绝对路径
-                                                                 // 或者从已知文件夹获取文件
-                                                                 // StorageFolder folder = ApplicationData.Current.LocalFolder;
-                                                                 // StorageFile file = await folder.GetFileAsync("yourfile.mp3");
-                                                                 // 创建Source对象
+            //string filePath = "ms-appx:///Assets/alert.wav"; // 使用相对路径或绝对路径
+            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "alert.wav");
             MediaSource mediaSource = MediaSource.CreateFromUri(new Uri(filePath));
 
             // 创建MediaPlayer对象
@@ -199,29 +192,44 @@ namespace App1
                 ContinuousReminderEnabled = continuous;
 
                 var settings = new Settings { TeamsAwaySeconds = interval, EarlyWarningSeconds = reminder, ContinuousReminderEnabled = continuous };
-                string json = JsonSerializer.Serialize(settings);
-                System.Diagnostics.Debug.WriteLine($"json={json}");
-
+                string jsonString;
+                try
+                {
+                    var options = new JsonSerializerOptions
+                    {
+                        WriteIndented = true,
+                        ReferenceHandler = ReferenceHandler.IgnoreCycles  // 忽略循环引用
+                    };
+                    jsonString = JsonSerializer.Serialize(settings, options);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"序列化失败: {ex}");
+                    var dialog = new ContentDialog
+                    {
+                        Title = "保存失败",
+                        Content = $"保存设置时发生错误：{ex.Message}",
+                        CloseButtonText = "确定",
+                        XamlRoot = this.Content.XamlRoot
+                    };
+                    _ = dialog.ShowAsync();
+                    return;
+                }
                 string filePath = GetSettingsFilePath();
-                System.Diagnostics.Trace.WriteLine($"filePath：{filePath} 秒");
-
-                File.WriteAllText(filePath, json);
+                File.WriteAllText(filePath, jsonString);
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"请输入有效的数字");
+                //System.Diagnostics.Debug.WriteLine($"请输入有效的数字");
                 // 输入无效时的提示
-                //var dialog = new ContentDialog
-                //{
-                //    Title = "错误",
-                //    Content = "请输入有效的数字（秒）",
-                //    CloseButtonText = "确定",
-                //    XamlRoot = this.XamlRoot
-                //};
-                //_ = dialog.ShowAsync();
-
-                // 需要引用 Windows Forms（仅限 Windows）
-
+                var dialog = new ContentDialog
+                {
+                    Title = "错误",
+                    Content = "请输入有效的数字（秒）",
+                    CloseButtonText = "确定",
+                    XamlRoot = this.Content.XamlRoot
+                };
+                _ = dialog.ShowAsync();
             }
         }
 
