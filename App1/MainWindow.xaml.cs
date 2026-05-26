@@ -35,7 +35,7 @@ namespace App1
     /// </summary>
     public sealed partial class MainWindow : Window
     {
-        private DispatcherTimer _timer;
+        private DispatcherTimer? _timer;
         private int TeamsAwaySeconds = 300;     // 5 分钟
         private int EarlyWarningSeconds = 10;   // 提前 10 秒
         private bool ContinuousReminderEnabled = false;
@@ -57,13 +57,22 @@ namespace App1
             {
                 string json = File.ReadAllText(filePath);
                 var settings = JsonSerializer.Deserialize<Settings>(json);
-                IntervalTextBox.Text = settings.TeamsAwaySeconds.ToString();
-                ReminderTextBox.Text = settings.EarlyWarningSeconds.ToString();
-                ContinuousReminderCheckBox.IsChecked = settings.ContinuousReminderEnabled;
+                if (settings is not null)
+                {
+                    IntervalTextBox.Text = settings.TeamsAwaySeconds.ToString();
+                    ReminderTextBox.Text = settings.EarlyWarningSeconds.ToString();
+                    ContinuousReminderCheckBox.IsChecked = settings.ContinuousReminderEnabled;
 
-                TeamsAwaySeconds = settings.TeamsAwaySeconds;
-                EarlyWarningSeconds = settings.EarlyWarningSeconds;
-                ContinuousReminderEnabled = settings.ContinuousReminderEnabled;
+                    TeamsAwaySeconds = settings.TeamsAwaySeconds;
+                    EarlyWarningSeconds = settings.EarlyWarningSeconds;
+                    ContinuousReminderEnabled = settings.ContinuousReminderEnabled;
+                }
+                else
+                {
+                    IntervalTextBox.Text = "300";
+                    ReminderTextBox.Text = "15";
+                    ContinuousReminderCheckBox.IsChecked = false;
+                }
             }
             else
             {
@@ -88,13 +97,14 @@ namespace App1
         }
 
         private void StartTimer() {
-            _timer = new DispatcherTimer();
-            _timer.Interval = TimeSpan.FromSeconds(1);
-            _timer.Tick += TimerElapsed;
-            _timer.Start();
+            DispatcherTimer timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromSeconds(1);
+            timer.Tick += TimerElapsed;
+            timer.Start();
+            _timer = timer;
         }
 
-        private void TimerElapsed(object sender, object e)
+        private void TimerElapsed(object? sender, object? e)
         {
             int idleSeconds = GetIdleTimeSeconds();
 
