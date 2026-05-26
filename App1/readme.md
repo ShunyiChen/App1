@@ -27,7 +27,7 @@ dotnet run -p:Platform=x64
 
 bash
 复制
-dotnet publish -p:Platform=x64 -p:SelfContained=true -p:RuntimeIdentifier=win-x64
+dotnet publish App1.csproj -c Release -p:SelfContained=true -p:RuntimeIdentifier=win-x64
 输出目录：默认在 bin/x64/<Configuration>/net<version>/publish/（如 bin/x64/Debug/net10.0-windows10.0.22621.0/publish/）。
 运行可执行文件：
 
@@ -49,7 +49,7 @@ dotnet run -p:Platform=x64 -c Debug
 发布配置（Release，优化性能）：
 bash
 复制
-dotnet publish -p:Platform=x64 -c Release -p:SelfContained=true
+dotnet publish App1.csproj -c Release -p:SelfContained=true -p:RuntimeIdentifier=win-x64
 4. 完整示例流程
 修改 .csproj（确保平台和自包含配置正确）：
 
