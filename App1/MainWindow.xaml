@@ -14,7 +14,7 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
-    <StackPanel Padding="20" Spacing="10">
+    <StackPanel Padding="20" Spacing="10" Loaded="RootPanel_Loaded">
         <!-- 时间间隔设置 -->
         <TextBlock Text="停留时间间隔 (秒):" FontSize="16"/>
         <TextBox x:Name="IntervalTextBox" PlaceholderText="请输入时间间隔（秒）" InputScope="Number"/>
@@ -26,9 +26,17 @@
         <!-- 开启连续提醒 -->
         <CheckBox x:Name="ContinuousReminderCheckBox" IsChecked="{Binding ContinuousReminderEnabled, Mode=TwoWay}" Content="开启连续提醒"/>
         
-        <!-- 保存按钮 -->
-        <Button x:Name="SaveButton" Content="保存设置" Click="SaveButton_Click" HorizontalAlignment="Center" Padding="10,5"/>
+        <!-- 使用水平 StackPanel将两个按钮放在同一行 -->
+        <StackPanel Orientation="Horizontal"
+            HorizontalAlignment ="Center"
+            Spacing ="20">
+ 
+            <!-- 保存按钮 -->
+            <Button x:Name="SaveButton" Content="保存设置" Click="SaveButton_Click" HorizontalAlignment="Center" Padding="10,5"/>
 
+            <!-- 保存按钮 -->
+            <ToggleButton x:Name="StopButton" Content="止まれ" Click="StopButton_Click" HorizontalAlignment="Center" Padding="10,5"/>
+        </StackPanel>
         <!-- 倒计时显示 -->
         <TextBlock x:Name="CountdownLabel" Text="倒计时: 0秒" FontSize="20" HorizontalAlignment="Center"/>
     </StackPanel>

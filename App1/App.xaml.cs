@@ -97,8 +97,8 @@ namespace App1
              
             var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(_window);
             MoveWindow(hWnd, 0, 0, 460, 420, true);
-            //CenterWindow(hWnd, 400, 400);
-            PositionTopRight(hWnd, 460, 420);
+            CenterWindow(hWnd, 400, 400);
+            // PositionTopRight(hWnd, 460, 420);
             _window.Activate();
         }
     }

@@ -35,18 +35,18 @@ namespace App1
     /// </summary>
     public sealed partial class MainWindow : Window
     {
-        private DispatcherTimer? _timer;
+        private DispatcherTimer _timer;
         private int TeamsAwaySeconds = 300;     // 5 分钟
         private int EarlyWarningSeconds = 10;   // 提前 10 秒
         private bool ContinuousReminderEnabled = false;
         private bool _hasWarned = false;              // 避免重复提醒
         private int _lastIdleSeconds = 0;             // 用来判断是否有用户活动
-
+        private bool _timerStarted = false;            // 防止重复启动定时器
+        private int _startupIdleSeconds = 0;           // 记录窗口显示时的空闲基线
         public MainWindow()
         {
             InitializeComponent();
             LoadSettings();
-            StartTimer();
         }
 
         // 加载配置文件
@@ -96,17 +96,49 @@ namespace App1
             return Path.Combine(directoryPath, "settings.json");
         }
 
-        private void StartTimer() {
+        public void StartTimer() {
+            if (_timerStarted)
+            {
+                return;
+            }
+
+            // 计时器每秒触发一次，用于更新倒计时和检查空闲状态。
             DispatcherTimer timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromSeconds(1);
             timer.Tick += TimerElapsed;
             timer.Start();
             _timer = timer;
+            _timerStarted = true;
+        }
+
+        private void StopTimer()
+        {
+            _timer.Stop();
+        }
+
+        private void RootPanel_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (_timerStarted)
+            {
+                return;
+            }
+
+            // 在窗口加载完成后记录当前空闲时间，
+            // 这样倒计时从窗口显示时刻开始，而非应用启动时刻。
+            _startupIdleSeconds = GetIdleTimeSeconds();
+            UpdateCountdownLabel(TeamsAwaySeconds);
+            StartTimer();
         }
 
         private void TimerElapsed(object? sender, object? e)
         {
-            int idleSeconds = GetIdleTimeSeconds();
+            int currentIdleSeconds = GetIdleTimeSeconds();
+            // 计算从窗口显示后经过的空闲秒数，避免启动前的系统空闲时间影响倒计时。
+            int idleSeconds = currentIdleSeconds - _startupIdleSeconds;
+            if (idleSeconds < 0)
+            {
+                idleSeconds = 0;
+            }
 
             // 在 UI 显示当前空闲秒数
             //Console.WriteLine($"空闲时间：{idleSeconds} 秒");
@@ -161,11 +193,6 @@ namespace App1
             // 播放音乐
             mediaPlayer.Play();
         }
-
-        //private async void StartAsyncTask()
-        //{
-        //    await Task.Run(() => PlayMp3File());
-        //}
 
         #region Win32 API - 获取系统空闲时间
         [StructLayout(LayoutKind.Sequential)]
@@ -240,6 +267,20 @@ namespace App1
                     XamlRoot = this.Content.XamlRoot
                 };
                 _ = dialog.ShowAsync();
+            }
+        }
+
+        private void StopButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (StopButton.IsChecked == true)
+            {
+                // 按钮被按下 - 暂停计时器
+                StopTimer();
+            }
+            else
+            {
+                // 按钮弹起 - 继续计时器
+                StartTimer();
             }
         }
 
