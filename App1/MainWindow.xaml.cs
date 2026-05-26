@@ -113,7 +113,15 @@ namespace App1
 
         private void StopTimer()
         {
+            if (_timer is null)
+            {
+                return;
+            }
+
             _timer.Stop();
+            _timer.Tick -= TimerElapsed;
+            _timerStarted = false;
+            _timer = null;
         }
 
         private void RootPanel_Loaded(object sender, RoutedEventArgs e)
@@ -173,8 +181,6 @@ namespace App1
                         PlayMp3File();
                     }
                 }
-                //SystemSounds.Beep.Play();
-                //MessageBeep(0); // 使用 Win32 MessageBeep，避免额外依赖
             }
         }
 
